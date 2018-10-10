@@ -1,0 +1,38 @@
+{
+  "name": "highqualityfriends/snowflake",
+  "description": "PHP implementation of Twitter snowflake",
+  "keywords": [
+    "snowflake",
+    "unique",
+    "id",
+    "uuid"
+  ],
+  "prefer-stable": true,
+  "type": "library",
+  "readme": "./README.md",
+  "license": "MPL-2.0",
+  "authors": [
+    {
+      "name": "Andrzej Wasiak",
+      "email": "mararok@gmail.com"
+    }
+  ],
+  "require-dev": {
+    "phpunit/phpunit": "6.*",
+    "mockery/mockery": "1.2.*"
+  },
+  "require": {
+    "php": "^7.1",
+    "sarehub/commons": "0.7.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "HighQualityFriends\\": "src/HighQualityFriends"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "HighQualityFriends\\": "tests/HighQualityFriends"
+    }
+  }
+}
