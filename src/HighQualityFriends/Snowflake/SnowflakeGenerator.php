@@ -8,44 +8,74 @@
 namespace HighQualityFriends\Snowflake;
 
 
-use SAREhub\Commons\Time\TimeProvider;
-
 class SnowflakeGenerator
 {
-    const TOTAL_BITS = 64;
-    const TIME_BITS = 42;
-    const MACHINE_ID_BITS = 10;
-    const SEQUENCE_NUMBER_BITS = 12;
-
-    const TIME_LEFT_SHIFT = self::TOTAL_BITS - self::TIME_BITS;
-    const MACHINE_ID_LEFT_SHIFT = self:: TOTAL_BITS - self::TIME_BITS - self::MACHINE_ID_BITS;
-
     /**
-     * @var TimeProvider
+     * @var callable
      */
     private $timeProvider;
 
     /**
-     * @var int
+     * @var SnowflakeGeneratorSettings
      */
-    private $machineId;
+    private $settings;
 
     /**
-     * @var Sequencer
+     * @var int
      */
-    private $sequencer;
+    private $currentSequenceNumber;
 
-    public function __construct(TimeProvider $timeProvider, int $machineId, Sequencer $sequencer)
+    /**
+     * @var int
+     */
+    private $lastTime = -1;
+
+
+    /**
+     * @param SnowflakeGeneratorSettings $settings
+     * @param callable $timeProvider Function must return time with milliseconds precision.
+     */
+    public function __construct(SnowflakeGeneratorSettings $settings, ?callable $timeProvider = null)
     {
-        $this->timeProvider = $timeProvider;
-        $this->machineId = $machineId;
-        $this->sequencer = $sequencer;
+        $this->timeProvider = $timeProvider ?? self::defaultTimeProvider();
+        $this->settings = $settings;
+        $this->currentSequenceNumber = $this->settings->getStartSequenceNumber();
+        $this->settings->check();
+    }
+
+    public static function defaultTimeProvider(): callable
+    {
+        return function () {
+            return (int)(microtime(true) * 1000);
+        };
     }
 
     public function getNext(): int
     {
-        $id = $this->timeProvider->getInMilliseconds() << self::TIME_LEFT_SHIFT;
-        $id |= $this->machineId << self::MACHINE_ID_LEFT_SHIFT;
+        $this->checkSequenceNumberRollover();
+        $time = $this->getNextTime();
+
+        $id = SnowflakeId::createRaw($time, $this->currentSequenceNumber, $this->settings);
+        $this->currentSequenceNumber++;
+        $this->lastTime = $time;
         return $id;
+    }
+
+    private function checkSequenceNumberRollover(): void
+    {
+        if ($this->currentSequenceNumber > $this->settings->getMaxSequenceNumber()) {
+            $this->currentSequenceNumber = 0;
+        }
+    }
+
+    private function getNextTime(): int
+    {
+        $time = ($this->timeProvider)();
+        if ($this->currentSequenceNumber === 0 && $this->lastTime === $time) {
+            while ($time === $this->lastTime) {
+                $time = ($this->timeProvider)();
+            }
+        }
+        return $time;
     }
 }
