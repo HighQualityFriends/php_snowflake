@@ -50,12 +50,20 @@ class SnowflakeGenerator
         };
     }
 
+    public function wrapInObject(int $rawId): SnowflakeId
+    {
+        return new SnowflakeId($rawId, $this->settings);
+    }
+
     public function getNext(): int
     {
         $this->checkSequenceNumberRollover();
         $time = $this->getNextTime();
 
-        $id = SnowflakeId::createRaw($time, $this->currentSequenceNumber, $this->settings);
+        $id = $time << $this->settings->getTimeLeftShift();
+        $id |= $this->settings->getNodeId() << $this->settings->getNodeIdLeftShift();
+        $id |= $this->currentSequenceNumber;
+
         $this->currentSequenceNumber++;
         $this->lastTime = $time;
         return $id;

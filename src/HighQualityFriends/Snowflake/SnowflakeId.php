@@ -41,7 +41,7 @@ class SnowflakeId implements \JsonSerializable
 
         $id = $time << $settings->getTimeLeftShift();
         $id |= $settings->getNodeId() << $settings->getNodeIdLeftShift();
-        $id |= self::extractBits($sequenceNumber, 0, $settings->getSequenceNumberBits());
+        $id |= $sequenceNumber;
         return $id;
     }
 

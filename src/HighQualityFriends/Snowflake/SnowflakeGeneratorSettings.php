@@ -30,11 +30,29 @@ class SnowflakeGeneratorSettings
      */
     private $startSequenceNumber;
 
+    /**
+     * @var int
+     */
+    private $calculatedTimeLeftShift;
+
+    /**
+     * @var int
+     */
+    private $calculatedMaxSequenceNumber;
+
+    /**
+     * @var int
+     */
+    private $calculatedSequenceNumberBits;
+
+
     public function __construct()
     {
         $this->nodeIdBits = self::DEFAULT_MACHINE_ID_BITS;
         $this->nodeId = -1;
         $this->startSequenceNumber = 0;
+
+        $this->recalculate();
     }
 
     public static function newInstance(): SnowflakeGeneratorSettings
@@ -61,6 +79,7 @@ class SnowflakeGeneratorSettings
     public function setNodeIdBits(int $nodeIdBits): SnowflakeGeneratorSettings
     {
         $this->nodeIdBits = $nodeIdBits;
+        $this->recalculate();
         return $this;
     }
 
@@ -77,12 +96,12 @@ class SnowflakeGeneratorSettings
 
     public function getSequenceNumberBits(): int
     {
-        return self::TOTAL_BITS - (self::TIME_BITS + $this->getNodeIdBits());
+        return $this->calculatedSequenceNumberBits;
     }
 
     public function getMaxSequenceNumber(): int
     {
-        return -1 ^ (-1 << $this->getSequenceNumberBits());
+        return $this->calculatedMaxSequenceNumber;
     }
 
     public function getMaxNodeId(): int
@@ -97,7 +116,13 @@ class SnowflakeGeneratorSettings
 
     public function getTimeLeftShift(): int
     {
-        return $this->getNodeIdLeftShift() + $this->getNodeIdBits();
+        return $this->calculatedTimeLeftShift;
+    }
+
+    private function recalculate() {
+        $this->calculatedSequenceNumberBits = self::TOTAL_BITS - (self::TIME_BITS + $this->getNodeIdBits());
+        $this->calculatedMaxSequenceNumber = -1 ^ (-1 << $this->getSequenceNumberBits());
+        $this->calculatedTimeLeftShift = $this->getNodeIdLeftShift() + $this->getNodeIdBits();
     }
 
     public function check(): void
