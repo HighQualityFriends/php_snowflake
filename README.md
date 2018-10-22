@@ -12,7 +12,7 @@ For more examples check project *examples* folder
 
 ### How do I get set up? ###
 ```
-composer require sarehub/commons
+composer require highqualityfriends/snowflake
 ```
 
 
